@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Phaser Game</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center; /* This will center it vertically as well */
+            background: #000; /* Assuming you want a black background */
+        }
+        #game-container canvas {
+            width: 100vw !important; /* Viewport width */
+            height: 100vh !important; /* Viewport height */
+            object-fit: cover; /* Cover the screen without stretching */ 
+        }
+
+
+    </style>
+</head>
+<body>
+    <div id="game-container"></div>
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>
