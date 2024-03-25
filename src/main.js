@@ -1,10 +1,11 @@
 import Phaser from 'phaser';
-import Player from './player';
+import Player from './player'; 
+import Enemy from './enemy'; 
 
 class MyGame extends Phaser.Scene {
     constructor() {
         super('mygame'); 
-    }
+    } 
 
     preload() {
         this.load.spritesheet('mySpriteSheet', 'assets/images/player-sprite.png', {
@@ -12,18 +13,18 @@ class MyGame extends Phaser.Scene {
             frameHeight: 128
         });
 
-        this.load.spritesheet('enemySpriteSheet', 'assets/images/player-sprite.png', {
-            frameWidth: 128, 
-            frameHeight: 128
+        this.load.spritesheet('enemySpriteSheet', 'assets/images/enemy-sprite.png', {
+            frameWidth: 100, 
+            frameHeight: 100
         });
        
         this.load.image('tileSprite', 'assets/images/ground.png'); 
         this.load.image('background', 'assets/images/level-1.png');
     }
-    
+
     create() {
         // Set the world bounds
-        const worldWidth = 10000; // Adjust to the width of your level
+        const worldWidth = 9999; // Adjust to the width of your level
         this.physics.world.setBounds(0, 0, worldWidth, this.sys.game.config.height);
     
         // Add the background image
@@ -35,64 +36,57 @@ class MyGame extends Phaser.Scene {
         bg.setScrollFactor(0.8);
     
         // Add the player
-        this.player = new Player(this, 100, 900);
+        this.player = this.initializePlayer(220, 900);  
 
-        // Add an enemy group
-        this.enemies = this.physics.add.group();
+        // Add enemy group
+        this.enemies = this.physics.add.group(); 
 
-        // Spawn an enemy periodically
-        this.time.addEvent({
-            delay: 1000, // Delay in ms between each spawn
-            callback: this.spawnEnemy,
-            callbackScope: this,
-            loop: true
-        });
-
+        // Initialize enemies
+        this.spawnInitialEnemies();
     
         // Set the ground position to just above the bottom of the game screen
-        let groundHeight = 100; // The height of the ground
+        let groundHeight = 200; // The height of the ground
         let groundY = this.sys.game.config.height - groundHeight / 2 - 10; // Move it up slightly
         const ground = this.add.tileSprite(
             this.sys.game.config.width / 2, // Centered horizontally
             groundY,
-            this.sys.game.config.width * 2, // Double the width for side-scrolling
+            this.sys.game.config.width * 4, // Double the width for side-scrolling
             groundHeight,
             'tileSprite'
         );
         this.physics.add.existing(ground, true);
     
         // Add collider between player and ground
-        this.physics.add.collider(this.player, ground);
-    
+        this.physics.add.collider(this.player, ground); 
+        this.physics.add.collider(this.enemies, ground); // Add this line
+
         this.cameras.main.setBounds(0, 0, worldWidth, this.sys.game.config.height);
         this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
-    
-        // Move the ground image slightly up to show the entire "level-1.png" image
-        this.ground = this.add.tileSprite(
-            worldWidth / 2,
-            this.sys.game.config.height - 150, // Adjust this value to move it up
-            worldWidth, // The width of the visible area
-            100, // The height of the ground
-            'tileSprite' 
-        );
+    }
 
+    initializePlayer(x, y) {
+        return new Player(this, x, y);
+    }
 
-        this.physics.add.existing(this.ground, true);
-        this.physics.add.collider(this.player, this.ground);  
+    initializeEnemy(x, y) {
+        return new Enemy(this, x, y);
+    }
 
-        
-    
-    } 
+    spawnInitialEnemies() {
+        this.originalEnemySpawn = { x: 220, y: 920 }; 
+        this.respawnEnemies(); // Call respawnEnemies method to spawn initial enemies
+    }
 
-    spawnEnemy() {
-        const spawnX = this.cameras.main.scrollX + this.cameras.main.width + 50; // Spawn off-screen to the right
-        const spawnY = Phaser.Math.Between(100, this.sys.game.config.height - 100); // Random Y position within game bounds
+    respawnEnemies() {
+        let numEnemies = 2;
+        for (let i = 0; i < numEnemies; i++) {
+            let adjustedX = this.originalEnemySpawn.x + i * 50;
+            let newEnemy = this.initializeEnemy(adjustedX, this.originalEnemySpawn.y);
+            this.enemies.add(newEnemy);
+        }
+        numEnemies *= 2;
+    }
 
-        const enemy = new Enemy(this, spawnX, spawnY);
-        this.enemies.add(enemy);
-    };
-    
-    
     update() {
         // Update the position of the tileSprite for the ground
         if (this.ground) {
@@ -100,9 +94,21 @@ class MyGame extends Phaser.Scene {
         }
 
         this.player.update();
+
+        this.enemies.getChildren().forEach(enemy => {
+            if (enemy.active) {
+                enemy.update(); // Update each enemy
+                // Check if enemy needs to respawn
+                if (enemy.y > this.sys.game.config.height) {
+                    enemy.destroy();
+                    this.respawnEnemies(); // Respawn enemy
+                }
+            }
+        });
     }
-    
-}
+} 
+
+
 
 const config = {
     type: Phaser.AUTO,
@@ -112,7 +118,7 @@ const config = {
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: { y: 9500 },
+            gravity: { y: 3500 },
             debug: true
         }
     },

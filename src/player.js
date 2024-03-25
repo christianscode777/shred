@@ -21,7 +21,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         // Jump properties
         this.isJumping = false;
-        this.jumpSpeed = -20000; // Adjust this value as needed
+        this.jumpSpeed = -200; // Adjust this value as needed
     }
 
     initAnimations(scene) {
